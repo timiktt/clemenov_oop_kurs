@@ -1,6 +1,48 @@
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
 
+
+list_keys = [
+    'last_name',
+    'first_p_name',
+    'number_phone',
+    'address',
+]
+
+#==========================================
+#ЗАПРОСЫ ______НАЧАЛО_______
+#==========================================
+actual_data = []
+def get_data():
+    data_to_convert = []
+    actual_data.clear()
+    for items in table_users.get_children():
+        row = table_users.item(items)
+        actual_data_str = ''
+        for i in range(len(row['values'])):
+            actual_data_str += str(row['values'][i])
+            actual_data_str += ' '
+        data_to_convert.append(actual_data_str)
+    for i in range(len(data_to_convert)):
+        obj_dict = {}
+        obj_list = data_to_convert[i].split(' ')
+        for i in range(len(list_keys)):
+            obj_dict[list_keys[i]] = obj_list[i]
+        actual_data.append(obj_dict)   
+
+def get_number_with_l_name(l_name: str):
+    get_data()
+    info = ''
+    for items in actual_data:
+        if items['last_name'].lower() == l_name.lower():
+            info += items['number_phone']
+            info += '\n'
+    if info == '':
+        info += 'Инфомация о данном\nсотруднике отсутствует' 
+    return info
+
+
+
 #==========================================
 #ФУНКЦИИ ФОРМЫ ______НАЧАЛО_______
 #==========================================
@@ -16,13 +58,82 @@ def select_request():
     else:
         print('Ошибка')
 
+def check_emty_enty():
+    if entry_last_name.get().replace(' ', '') == '':
+        return False
+    elif entry_first_p_name.get().replace(' ', '') == '':
+        return False
+    elif entry_phone_number.get().replace(' ', '') == '':
+        return False
+    elif entry_address.get().replace(' ', '') == '':
+        return False
+    else:
+        return True
+def add_data():
+    data = []
+    if check_emty_enty():
+        data.append(str(entry_last_name.get()).replace(' ', ''))
+        data.append(str(entry_first_p_name.get()).replace(' ', ''))
+        data.append(str(entry_phone_number.get()).replace(' ',''))
+        data.append(str(entry_address.get()).replace(' ', ''))
+        table_users.insert("", END, values=data)
+        entry_last_name.delete(0, END)
+        entry_first_p_name.delete(0, END)
+        entry_phone_number.delete(0, END)
+        entry_address.delete(0, END)
+
+def edit_data():
+    def command_ok():
+        if check_emty_enty():
+            data = []
+            data.append(str(entry_last_name.get()).replace(' ', ''))
+            data.append(str(entry_first_p_name.get()).replace(' ', ''))
+            data.append(str(entry_phone_number.get()).replace(' ',''))
+            data.append(str(entry_address.get()).replace(' ', ''))
+            table_users.item(table_users.selection(), value=data)
+            entry_last_name.delete(0, END)
+            entry_first_p_name.delete(0, END)
+            entry_phone_number.delete(0, END)
+            entry_address.delete(0, END)
+            button_add.configure(text='Добавить', command=add_data, background='white')
+            button_edit.configure(text='Изменить', command=edit_data, background='white')
+    def command_cancel():
+        button_add.configure(text='Добавить', command=add_data, background='white')
+        button_edit.configure(text='Изменить', command=edit_data, background='white')
+        entry_last_name.delete(0, END)
+        entry_first_p_name.delete(0, END)
+        entry_phone_number.delete(0, END)
+        entry_address.delete(0, END)
+    if table_users.selection():
+        button_add.configure(text='Ок', command=command_ok, background='green')
+        button_edit.configure(text='Отмена', command=command_cancel, background='red')
+        entry_last_name.delete(0, END)
+        entry_first_p_name.delete(0, END)
+        entry_phone_number.delete(0, END)
+        entry_address.delete(0, END)
+        row = table_users.item(table_users.selection())
+        entry_last_name.insert(0, row['values'][0])
+        entry_first_p_name.insert(0, row['values'][1])
+        entry_phone_number.insert(0, row['values'][2])
+        entry_address.insert(0, row['values'][3])
+
+def delete_select():
+    if table_users.selection():
+        table_users.delete(table_users.selection())
+
+def delete_data_in_table():
+    for item in table_users.get_children():
+        table_users.delete(item)
+
 #==========================================
 #ОПИСАНИЕ ДОЧЕРНИХ ОКОН ______НАЧАЛО_______
 #==========================================
 def child_form_req_1():
-    test_text = '+79960023192 Хайретдинов ТС\n+79960023192 Хайретдинов ТС\n+79960023192 Хайретдинов ТС\n+79960023192 Хайретдинов ТС\n+79960023192 Хайретдинов ТС\n+79960023192 Хайретдинов ТС'
     def configure_label():
-        label_text.configure(text=test_text, background='lightgray')
+        l_name = entry_intro.get()
+        l_name = l_name.replace(' ', '')
+        info = get_number_with_l_name(l_name)
+        label_text.configure(text=info)
     window = Toplevel(main_window, background='gray', width=700, border=10, relief=SUNKEN)
     window.title('Найти телефон сотрудника по его фамилии')
     window.geometry('300x250')
@@ -36,13 +147,52 @@ def child_form_req_1():
     label_text.grid(row=3, column=0, pady=10, padx=10)
 
 def child_form_req_2():
-    pass
+    test_text = 'Хайретдинов ТС\nХайретдинов ТС\nХайретдинов ТС\nХайретдинов ТС\n Хайретдинов ТС\n Хайретдинов ТС'
+    def configure_label():
+        label_text.configure(text=test_text, background='lightgray')
+    window = Toplevel(main_window, background='gray', width=700, border=10, relief=SUNKEN)
+    window.title('Найти список сотрудников, чьи фамилии начинаются с заданных букв')
+    window.geometry('330x250')
+    label_intro = Label(window, text='Введите несколько первых букв фамилии', background='gray', font=10)
+    label_intro.grid(row=0, column=0)
+    entry_intro = Entry(window, font=10)
+    entry_intro.grid(row=1, column=0)
+    button = Button(window,text='Найти', background='lightgray', font=10, relief=SUNKEN, width=20, command=configure_label)
+    button.grid(row=2, column=0, pady=10)
+    label_text = Label(window, text='', font=14, background='gray')
+    label_text.grid(row=3, column=0, pady=10, padx=10)
 
 def child_form_req_3():
-    pass
+    test_text = '+79960023192\n+79960023192\n+79960023192\n+79960023192\n +79960023192\n+79960023192'
+    def configure_label():
+        label_text.configure(text=test_text, background='lightgray')
+    window = Toplevel(main_window, background='gray', width=700, border=10, relief=SUNKEN)
+    window.title('Найти список сотрудников, чьи телефоны начинаются с заданных цифр')
+    window.geometry('330x250')
+    label_intro = Label(window, text='Введите несколько первых цифр номера', background='gray', font=10)
+    label_intro.grid(row=0, column=0)
+    entry_intro = Entry(window, font=10)
+    entry_intro.grid(row=1, column=0)
+    button = Button(window,text='Найти', background='lightgray', font=10, relief=SUNKEN, width=20, command=configure_label)
+    button.grid(row=2, column=0, pady=10)
+    label_text = Label(window, text='', font=14, background='gray')
+    label_text.grid(row=3, column=0, pady=10, padx=10)
 
 def child_form_req_4():
-    pass
+    test_text = 'Богдановича2/27кв156\nБогдановича2/27кв156\nБогдановича2/27кв156\n+Богдановича2/27кв156\nБогдановича2/27кв156\n+79960023192'
+    def configure_label():
+        label_text.configure(text=test_text, background='lightgray')
+    window = Toplevel(main_window, background='gray', width=700, border=10, relief=SUNKEN)
+    window.title('Найти адрес сотрудника по номеру телефона')
+    window.geometry('330x250')
+    label_intro = Label(window, text='Введите номер телефона сотрудника', background='gray', font=10)
+    label_intro.grid(row=0, column=0)
+    entry_intro = Entry(window, font=10)
+    entry_intro.grid(row=1, column=0)
+    button = Button(window,text='Найти', background='lightgray', font=10, relief=SUNKEN, width=20, command=configure_label)
+    button.grid(row=2, column=0, pady=10)
+    label_text = Label(window, text='', font=14, background='gray')
+    label_text.grid(row=3, column=0, pady=10, padx=10)
 
 #==========================================
 #ОПИСАНИЕ ГЛАВНОГО ОКНА ______НАЧАЛО_______
@@ -113,18 +263,18 @@ label_address.grid(row = 0, column=3)
 entry_address = Entry(frame_place, font='10')
 entry_address.grid(row=1,column=3, padx=10)
 #Кнопка добавить
-button_add = Button(frame_place, text='Добавить', width=15)
+button_add = Button(frame_place, text='Добавить', width=15, command=add_data)
 button_add.grid(row=0, column=4, padx=20)
 #Кнопка изменить
-button_edit = Button(frame_place, text='Изменить', width=15)
+button_edit = Button(frame_place, text='Изменить', width=15, command=edit_data)
 button_edit.grid(row=1, column=4, padx=20)
 frame_place.grid(row=1, column=0, padx=10, pady=10)
 
 #КНОПКИ УДАЛИТЬ
 frame_button_del = Frame(main_window, background='gray', width=700, border=10, relief=SUNKEN, padx=10, pady=10)
-buttod_del_row = Button(frame_button_del, text='Удалить строчку', font=10, width=15, padx=5, pady=5)
+buttod_del_row = Button(frame_button_del, text='Удалить строчку', font=10, width=15, padx=5, pady=5, command=delete_select)
 buttod_del_row.grid(row=0, column=0, padx=10)
-buttod_del_all = Button(frame_button_del, text='Удалить все данные', font=10, width=15, padx=20, pady=5)
+buttod_del_all = Button(frame_button_del, text='Удалить все данные', font=10, width=15, padx=20, pady=5, command=delete_data_in_table)
 buttod_del_all.grid(row=0, column=1, padx=10)
 frame_button_del.grid(row=2, column=0)
 #_______________________________________________
